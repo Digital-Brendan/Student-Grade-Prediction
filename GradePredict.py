@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 import numpy as np
-import pickle
 
 data_set = pd.read_csv("Students-mat.csv")
 data_set = pd.get_dummies(data_set, columns=["Mjob", "Fjob", "sex", "Pstatus", "guardian", "schoolsup", "famsup", "paid", "activities", "nursery", "higher", "internet", "romantic"], drop_first=True)
@@ -24,13 +23,8 @@ for num in range(50000):
     accuracy = regressor.score(att_test, lab_test)
 
     if accuracy > 0.95:
-        with open("GradePredict.pickle", "wb") as f:
-            pickle.dump(regressor, f)
         print(accuracy)
         break
-
-pickle_in = open("GradePredict.pickle", "rb")
-regressor = pickle.load(pickle_in)
 
 lab_pred = np.rint(regressor.predict(att_test))
 
