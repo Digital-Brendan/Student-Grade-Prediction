@@ -3,10 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 import numpy as np
-import GUI
 
-# Uses external self-made module
-GUI.create_gui()
 
 # Defines dataset, creates numeric/dummy vars from non-int attributes, and specifies label
 data_set = pd.read_csv("CSV Files/Students-mat.csv")
@@ -39,12 +36,14 @@ df1 = df.head(25)
 print(df1)
 
 # Outputs Pandas DataFrame (df) as Excel CSV file
-df.to_csv(r"G:\Computing\Year 14\Student-Grade-Prediction\export_dataframe.csv")
+df.to_csv(r"G:\Computing\Year 14\Student-Grade-Prediction\CSV Files\export_dataframe.csv")
+
 
 # Clearer way to see disparities between predicted and actual grades
-df1.plot(kind='bar', figsize=(10, 8))
-plt.xlabel("Student")
-plt.ylabel("Grade")
-plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
-plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
-# plt.show()
+def graph_plot():
+    df1.plot(kind='bar', figsize=(10, 8))
+    plt.xlabel("Student")
+    plt.ylabel("Grade")
+    plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
+    plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
+    plt.show()
