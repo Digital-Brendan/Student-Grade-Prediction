@@ -1,6 +1,6 @@
 from tkinter import *
 import os
-from GradePredict import graph_plot
+from GradePredict import graph_plot, regressor, df_real, pd, np
 
 # Creates first screen
 screen_first = Tk()
@@ -49,14 +49,38 @@ def register():
 
 
 def mainscreen():
+    def pred_new_grade():
+        # Don't forget to specify keys cannot duplicate
+        name = str(entry_name.get())
+        g1 = int(entry_g1.get())
+        g2 = int(entry_g2.get())
+        g3 = np.round(regressor.predict([[g1, g2]])).astype(int)
+
+        grades.update({name: g3})
+        for key, value in grades.items():
+            if value > 20:
+                value = 20
+            elif value < 0:
+                value = 0
+
+            print(key, " : ", value[0])
+        print("")
+
+    grades = {}
+
     # Creates new toplevel screen
     screen_main = Toplevel(screen_first)
     screen_main.resizable(False, False)
     screen_main.title("Grade Prediction System")
     screen_main.geometry("700x300")
 
-    Label(screen_main, text="Grade Prediction System", bg="orange", width="700", height="2", font=("Calibri", 13)).pack()
+    Label(screen_main, text="Grade Prediction System", bg="#f1c40f", width="700", height="2", font=("Calibri", 13)).pack()
 
+    entry_name = Entry(screen_main); entry_name.pack()
+    entry_g1 = Entry(screen_main); entry_g1.pack()
+    entry_g2 = Entry(screen_main); entry_g2.pack()
+
+    Button(screen_main, text="Predict G3 Grade", width="20", height="1", font=("Calibri", 13), command=pred_new_grade).pack()
     Button(screen_main, text="Generate Graph", width="20", height="1", font=("Calibri", 13), command=graph_plot).pack()
 
 
@@ -92,7 +116,7 @@ def login():
     screen_login.geometry("300x250")
 
     # Creates and places labels, entry fields, and a button
-    Label(screen_login, text="Login", bg="pink", width="300", height="2", font=("Calibri", 13)).pack()
+    Label(screen_login, text="Login", bg="#e67e22", width="300", height="2", font=("Calibri", 13)).pack()
 
     Label(screen_login, text="Please enter details").pack()
     Label(screen_login, text="").pack()
@@ -108,7 +132,7 @@ def login():
 
 
 # Creates and places labels and buttons
-Label(text="Teacher Login", bg="grey", width="300", height="2", font=("Calibri", 13)).pack()
+Label(text="Teacher Login", bg="#e74c3c", width="300", height="2", font=("Calibri", 13)).pack()
 Label(text="").pack()  # Blank line
 Button(text="Login", width="30", height="2", command=login).pack()
 Label(text="").pack()
@@ -116,6 +140,7 @@ Button(text="Register", width="30", height="2", command=register).pack()
 Label(text="").pack()
 Label(text="").pack()
 Label(text="Brendan Rogan \u00A9").pack()
+
 
 # Program runs by looping
 screen_first.mainloop()
