@@ -5,7 +5,8 @@ import numpy as np
 import os
 import time
 import sqlite3
-from GradePredict import regressor, train_model
+from algorithm import regressor, train_model
+
 
 # Creates first screen
 screen_loading = Tk()
@@ -53,7 +54,7 @@ def login():
     entry_log_username = Entry(screen_login); entry_log_username.place(x=130, y=149)
     Label(screen_login, text="Password", font=("Abadi", 12)).place(x=40, y=216)
     entry_log_password = Entry(screen_login, show="*"); entry_log_password.place(x=130, y=219)
-    Button(screen_login, text="Login", bg="#C1CDCD", font=("Abadi", 12, "bold"), relief="flat", command=login_verify).place(x=120, y=286)
+    Button(screen_login, text="Login", bg="#C1CDCD", font=("Abadi", 12, "bold"), relief="groove", command=login_verify).place(x=120, y=286)
     Button(screen_login, text="Not registered?", font=("Abadi", 8), relief="flat", command=register).place(x=110, y=356)
 
 
@@ -87,7 +88,7 @@ def register():
     entry_reg_username = Entry(screen_register); entry_reg_username.place(x=130, y=149)
     Label(screen_register, text="Password", font=("Abadi", 12)).place(x=40, y=216)
     entry_reg_password = Entry(screen_register, show="*"); entry_reg_password.place(x=130, y=219)
-    Button(screen_register, text="Register", bg="#C1CDCD", font=("Abadi", 12, "bold"), relief="flat", command=create_user).place(x=110, y=286)
+    Button(screen_register, text="Register", bg="#C1CDCD", font=("Abadi", 12, "bold"), relief="groove", command=create_user).place(x=110, y=286)
 
 
 def database():
@@ -101,13 +102,14 @@ def database():
         records = cursor.fetchall()
 
         print_records = ""
+        Label(screen_database, text="- - - Students - - -", font=("Arial", 11, "bold")).place(x=287, y=300)
 
         # Loop through db info
         for record in records:
             print_records += str(record[5]) + " " + (record[1]).upper() + ", " + str(record[0]).title() + " - " + str(record[4]) + "\n"
 
         global students
-        students = Label(screen_database, text=print_records); students.place(x=440, y=30)
+        students = Label(screen_database, text=print_records, width=38); students.place(x=215, y=320)  # Uses width in 'text units', not pixels. i.e. width of '0' character
 
         conn.commit()
         conn.close()
@@ -120,12 +122,12 @@ def database():
         # Insert into table
         cursor.execute("INSERT INTO students VALUES(:forename, :surname, :g1, :g2, :g3)",
                        {
-                            "forename": entry_forename.get(),
-                            "surname": entry_surname.get(),
-                            "g1": entry_g1.get(),
-                            "g2": entry_g2.get(),
-                            "g3": entry_g3.get()
-                       })  # Creates placeholder variables
+                           "forename": (entry_forename.get()).strip(),
+                           "surname": (entry_surname.get()).strip(),
+                           "g1": (entry_g1.get()).strip(),
+                           "g2": (entry_g2.get()).strip(),
+                           "g3": entry_g3.get()
+                       })
 
         conn.commit()
         conn.close()
@@ -136,6 +138,7 @@ def database():
         entry_g1.delete(0, END)
         entry_g2.delete(0, END)
         entry_g3.delete(0, END)
+        entry_oid.delete(0, END)
 
         students.destroy()
         query()
@@ -154,22 +157,88 @@ def database():
         students.destroy()
         query()
 
-    def predict_g3():
-        if len(entry_g1.get()) == 0 or len(entry_g2.get()) == 0:
-            messagebox.showerror("Error", "Do not leave the grades blank!")
+    def update_record():
+        # Connect to db
+        conn = sqlite3.connect("student_grades.db")
+        cursor = conn.cursor()
 
+        cursor.execute("""UPDATE students SET
+            forename = :forename,
+            surname = :surname,
+            g1 = :g1,
+            g2 = :g2,
+            g3 = :g3
+            
+            WHERE oid = :oid""",
+            {
+                "forename": entry_forename.get(),
+                "surname": entry_surname.get(),
+                "g1": entry_g1.get(),
+                "g2": entry_g2.get(),
+                "g3": entry_g3.get(),
+                "oid": entry_oid.get()
+            }
+
+        )
+
+        conn.commit()
+        conn.close()
+
+        # Clear text boxes
+        entry_forename.delete(0, END)
+        entry_surname.delete(0, END)
+        entry_g1.delete(0, END)
+        entry_g2.delete(0, END)
+        entry_g3.delete(0, END)
+        entry_oid.delete(0, END)
+
+        query()
+
+    def search_record():
+        # Clear text boxes
+        entry_forename.delete(0, END)
+        entry_surname.delete(0, END)
+        entry_g1.delete(0, END)
+        entry_g2.delete(0, END)
+        entry_g3.delete(0, END)
+
+        # Connect to db
+        conn = sqlite3.connect("student_grades.db")
+        cursor = conn.cursor()
+
+        # Query db
+        cursor.execute("SELECT * FROM students WHERE oid = " + entry_oid.get())  # Creates primary key for you
+        records = cursor.fetchall()
+
+        for record in records:
+            entry_forename.insert(0, record[0])
+            entry_surname.insert(0, record[1])
+            entry_g1.insert(0, record[2])
+            entry_g2.insert(0, record[3])
+            entry_g3.insert(0, record[4])
+
+        conn.commit()
+        conn.close()
+
+    def predict_g3():
         # Error catching
         g1 = int()
         g2 = int()
 
-        try:
-            g1 = int(entry_g1.get())
-            g2 = int(entry_g2.get())
-        except ValueError:
-            messagebox.showerror("Error", "Grades must be integers!")
+        if len(entry_g1.get()) == 0 and len(entry_g2.get()) == 0:
+            pass
+        elif len(entry_g1.get()) == 0 or len(entry_g2.get()) == 0:
+            pass
+        else:
+            try:
+                g1 = int(entry_g1.get())
+                g2 = int(entry_g2.get())
+            except ValueError:
+                messagebox.showerror("Error!", "Grades must be integers!")
 
         g3 = np.round(regressor.predict([[g1, g2]])).astype(int)
 
+        # Create upper and lower limits for g3 value
         if g3[0] > 20:
             g3[0] = 20
         elif g3[0] < 0:
@@ -180,12 +249,23 @@ def database():
             messagebox.showerror("Invalid grade!", "Please enter a grade between 0 and 20.")
         else:
             entry_g3.delete(0, END)
-            entry_g3.insert(0, str(g3[0]))
+            if 0 <= g3[0] <= 4:
+                entry_g3.insert(0, "F")
+            elif 5 <= g3[0] <= 8:
+                entry_g3.insert(0, "D")
+            elif 9 <= g3[0] <= 12:
+                entry_g3.insert(0, "C")
+            elif 13 <= g3[0] <= 15:
+                entry_g3.insert(0, "B")
+            elif 16 <= g3[0] <= 18:
+                entry_g3.insert(0, "A")
+            else:
+                entry_g3.insert(0, "A*")
 
     screen_database = Toplevel()
     screen_database.resizable(False, False)
     screen_database.title("Student Database")
-    screen_database.geometry("700x300")
+    screen_database.geometry("470x700")
     screen_database.iconbitmap("icon.ico")
 
     # Create/conncet to database
@@ -205,23 +285,43 @@ def database():
     # )""")
 
     # Create GUI
-    entry_forename = Entry(screen_database, width=30); entry_forename.place(x=30, y=35)
-    entry_surname = Entry(screen_database, width=30); entry_surname.place(x=30, y=90)
-    entry_g1 = Entry(screen_database, width=30); entry_g1.place(x=30, y=145)
-    entry_g2 = Entry(screen_database, width=30); entry_g2.place(x=30, y=200)
-    entry_g3 = Entry(screen_database, width=30); entry_g3.place(x=30, y=255)
-    entry_oid = Entry(screen_database, width=30); entry_oid.place(x=250, y=200)
+    entry_forename = Entry(screen_database, width=30); entry_forename.place(x=30, y=210)
+    entry_surname = Entry(screen_database, width=30); entry_surname.place(x=30, y=270)
+    entry_g1 = Entry(screen_database, width=30); entry_g1.place(x=30, y=330)
+    entry_g2 = Entry(screen_database, width=30); entry_g2.place(x=30, y=390)
+    entry_g3 = Entry(screen_database, width=30); entry_g3.place(x=30, y=450)
+    entry_oid = Entry(screen_database, width=30); entry_oid.place(x=256, y=210)
 
-    Label(screen_database, text="Forename").place(x=28, y=10)
-    Label(screen_database, text="Surname").place(x=28, y=65)
-    Label(screen_database, text="G1 Grade").place(x=28, y=120)
-    Label(screen_database, text="G2 Grade").place(x=28, y=175)
-    Label(screen_database, text="G3 Grade").place(x=28, y=230)
-    Label(screen_database, text="Enter ID of student to delete").place(x=250, y=175)
+    Label(screen_database, text="Final Grade Prediction", font=("Arial", 16, "bold")).place(x=132, y=20)
+    Label(screen_database, text="1) Input information", font=("Arial", 9)).place(x=25, y=70)
+    Label(screen_database, text="2) Click \'Predict Grade\' button", font=("Arial", 9)).place(x=25, y=90)
+    Label(screen_database, text="3) Click \'Save Student\' button", font=("Arial", 9)).place(x=25, y=110)
+    Label(screen_database, text="Note: to edit, search for ID and click \'Update\' to save changes.", font=("Arial", 9)).place(x=25, y=140)
 
-    Button(screen_database, text="Predict G3 Grade", command=predict_g3).place(x=250, y=35)
-    Button(screen_database, text="Add Student to database", command=submit).place(x=250, y=80)
-    Button(screen_database, text="Delete", command=delete_record).place(x=250, y=225)
+    Label(screen_database, text="Forename").place(x=29, y=187)
+    Label(screen_database, text="Surname").place(x=29, y=247)
+    Label(screen_database, text="Grade 1").place(x=29, y=307)
+    Label(screen_database, text="Grade 2").place(x=29, y=367)
+    Label(screen_database, text="Final Grade").place(x=29, y=427)
+    Label(screen_database, text="Student ID").place(x=255, y=187)
+
+    Button(screen_database, text="Predict Grade", command=predict_g3, relief="groove").place(x=35, y=490)
+    Button(screen_database, text="Save Student", command=submit, relief="groove").place(x=130, y=490)
+    Button(screen_database, text="Search", command=search_record, relief="groove").place(x=265, y=240)
+    Button(screen_database, text="Update", command=update_record, relief="groove").place(x=324, y=240)
+    Button(screen_database, text="Delete", command=delete_record, relief="groove").place(x=385, y=240)
+
+    # Defines logout procedure
+    def logout():
+        screen_database.destroy()
+        login()
+    Button(screen_database, text="Log Out", command=logout, relief="groove").place(x=10, y=665)
+
+    # Defines help procedure
+    def help():
+        messagebox.showinfo("Grading Information", "Grades 1 and 2 are numerical (0-20). The final grade is predicted using machine learning and mapped to the following bands:\n\n"
+                                                    "0-4:      F\n5-8:      D\n9-12:    C\n13-15:  B\n16-18:  A\n19-20:  A*")
+    Button(screen_database, text="Help", command=help, relief="groove").place(x=425, y=665)
 
     query()
 

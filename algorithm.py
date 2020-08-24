@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 
 # Defines dataset, creates numeric/dummy vars from non-int attributes, and specifies label
-data_set = pd.read_csv("CSV Files/Students-mat.csv")
+data_set = pd.read_csv("student-grades.csv")
 
 print(f"ROWxCOLUMN: {data_set.shape}")
 print(data_set.describe())
